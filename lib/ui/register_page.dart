@@ -1,9 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:healthy/api/constan.dart';
-import 'package:healthy/ui/login_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:healthy/ui/login_page.dart'; // Sesuaikan dengan rute login page
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -18,156 +16,98 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // URL API untuk register
+  final String _url = "http://192.168.1.8/healthyDb/healthyDb/register.php"; // Ganti dengan URL server Anda
+
   Future<void> _registerUser() async {
-    final url = BaseUrl.register; 
+    final response = await http.post(
+      Uri.parse(_url),
+      body: {
+        'fullname': _fullnameController.text,
+        'username': _usernameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      },
+    );
 
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        body: {
-          'fullname': _fullnameController.text,
-          'username': _usernameController.text,
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        },
+    final responseData = json.decode(response.body);
+    if (responseData['value'] == 1) {
+      // Jika berhasil registrasi, pindah ke halaman login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
-
-      final responseData = json.decode(response.body);
-      
-      if (responseData['value'] == 1) {
-        // Registrasi berhasil, navigasi ke halaman login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      } else {
-        // Registrasi gagal, tampilkan pesan kesalahan
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(responseData['message']),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (error) {
-      print('Error registering: $error');
-      // Handle error
+    } else {
+      // Jika gagal, tampilkan pesan error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseData['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Register'),
+        backgroundColor: Colors.green,
+      ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Center(
-              child: Image(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              const Image(
                 image: AssetImage("images/splash.jpeg"),
                 height: 150,
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Register To App HealthCare",
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+              const SizedBox(height: 16),
+              const Text(
+                "Register to App HealthCare",
+                style: TextStyle(color: Colors.green, fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _fullnameController,
-                decoration: InputDecoration(
-                  fillColor: Colors.green.withOpacity(0.3),
-                  filled: true,
-                  hintText: "FULLNAME",
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(24)),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  fillColor: Colors.green.withOpacity(0.3),
-                  filled: true,
-                  hintText: "USERNAME",
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(24)),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  fillColor: Colors.green.withOpacity(0.3),
-                  filled: true,
-                  hintText: "EMAIL",
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(24)),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  fillColor: Colors.green.withOpacity(0.3),
-                  filled: true,
-                  hintText: "PASSWORD",
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(24)),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green
-                ),
+              const SizedBox(height: 16),
+              _buildTextField(_fullnameController, 'Full Name'),
+              _buildTextField(_usernameController, 'Username'),
+              _buildTextField(_emailController, 'Email'),
+              _buildTextField(_passwordController, 'Password', obscureText: true),
+              const SizedBox(height: 20),
+              ElevatedButton(
                 onPressed: _registerUser,
-                child: const Text(
-                  "Register",
-                  style: TextStyle(color: Colors.black),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: const Text("Register", style: TextStyle(color: Colors.white)),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                },
+                child: const Text('Already have an account? Login', style: TextStyle(color: Colors.green)),
+              ),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-            );
-          },
-          child: const Text(
-            "Anda sudah punya akun, silahkan login",
-            style: TextStyle(color: Colors.black),
-          ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, {bool obscureText = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.green.withOpacity(0.1),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
         ),
       ),
     );
